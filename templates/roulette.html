@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Advanced Roulette</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/roulette.css') }}">
+</head>
+
+<body>
+    <h1>Advanced Roulette</h1>
+    <div>Balance: $<span id="balance">100</span></div>
+
+    <div>
+        <label for="betAmount">Bet Amount:</label>
+        <input type="number" id="betAmount" min="1" value="10" />
+
+        <label for="betType">Bet Type:</label>
+        <select id="betType">
+            <option value="number">Number</option>
+            <option value="color">Color</option>
+            <option value="odd_even">Odd/Even</option>
+            <option value="high_low">High/Low</option>
+            <option value="dozen">Dozen</option>
+            <option value="column">Column</option>
+            <option value="split">Split</option>
+            <option value="corner">Corner</option>
+            <option value="street">Street</option>
+        </select>
+
+        <label for="betValue">Bet Value (e.g., "Red" or "1 2"):</label>
+        <input type="text" id="betValue" placeholder="e.g., 17 or Red or 1 2 3" />
+
+        <button onclick="placeBet()">Place Bet</button>
+    </div>
+
+    <div id="output"></div>
+
+    <script>
+        let balance = 100;
+
+        const spinRoulette = () => {
+            const numbers = Array.from({ length: 37 }, (_, i) => i);
+            const colors = ['Green', ...Array(36).fill().map((_, i) => (i % 2 === 0 ? 'Black' : 'Red'))];
+            const index = Math.floor(Math.random() * 37);
+            return { number: numbers[index], color: colors[index] };
+        };
+
+        const calculatePayout = (type, value, result, amount) => {
+            const num = result.number;
+            const col = result.color;
+
+            switch (type) {
+                case 'number':
+                    return Number(value) === num ? amount * 35 : -amount;
+                case 'color':
+                    return value === col ? amount * 2 : -amount;
+                case 'odd_even':
+                    return (value === 'Odd' && num % 2 === 1) || (value === 'Even' && num % 2 === 0 && num !== 0) ? amount * 2 : -amount;
+                case 'high_low':
+                    return (value === 'High' && num >= 19 && num <= 36) || (value === 'Low' && num >= 1 && num <= 18) ? amount * 2 : -amount;
+                case 'dozen':
+                    if ((value === '1st' && num >= 1 && num <= 12) || (value === '2nd' && num >= 13 && num <= 24) || (value === '3rd' && num >= 25 && num <= 36)) return amount * 3;
+                    return -amount;
+                case 'column':
+                    if ((value === '1st' && num % 3 === 1) || (value === '2nd' && num % 3 === 2) || (value === '3rd' && num % 3 === 0 && num !== 0)) return amount * 3;
+                    return -amount;
+                case 'split':
+                    return value.includes(num) ? amount * 17 : -amount;
+                case 'corner':
+                    return value.includes(num) ? amount * 8 : -amount;
+                case 'street':
+                    return value.includes(num) ? amount * 11 : -amount;
+                default:
+                    return -amount;
+            }
+        };
+
+        function placeBet() {
+            const amount = parseInt(document.getElementById('betAmount').value);
+            const type = document.getElementById('betType').value;
+            const rawValue = document.getElementById('betValue').value.trim();
+            let value = rawValue;
+
+            if (isNaN(amount) || amount <= 0 || amount > balance) {
+                alert("Invalid bet amount.");
+                return;
+            }
+
+            // Parse value if array bet
+            if (['split', 'corner', 'street'].includes(type)) {
+                value = rawValue.split(' ').map(Number).filter(n => !isNaN(n) && n >= 0 && n <= 36);
+                if (value.length !== (type === 'split' ? 2 : type === 'corner' ? 4 : 3)) {
+                    alert("Invalid number count for this bet type.");
+                    return;
+                }
+            }
+
+            const result = spinRoulette();
+            const payout = calculatePayout(type, value, result, amount);
+            balance += payout;
+            document.getElementById("balance").textContent = balance;
+
+            let message = `Roulette spun... ${result.number} (${result.color})\n`;
+            if (payout > 0) {
+                message += `You won $${payout - amount}! 🎉`;
+            } else {
+                message += `You lost! 😢`;
+            }
+            document.getElementById("output").textContent = message;
+
+            if (balance <= 0) {
+                document.getElementById("output").textContent += "\nYou're out of money. Game over!";
+            }
+        }
+    </script>
+    <div><a href="/roulette"><button>TRY AGAIN</button></a></div>
+    <div><a href="/"><button>GO HOME</button></a></div>
+</body>
+
+</html>

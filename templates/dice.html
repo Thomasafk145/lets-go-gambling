@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Craps Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dice.css') }}">
+</head>
+
+<body>
+    <h1>🎲 Craps Game</h1>
+    <p>Balance: $<span id="balance">100</span></p>
+    <input type="text" id="betInput" placeholder="Enter bet amount or 'all'" />
+    <br>
+    <button onclick="placeBet()">Place Bet</button>
+    <button onclick="showRules()">Show Rules</button>
+    <div id="gameArea" style="display:none;">
+        <p class="dice" id="diceResult"></p>
+        <p id="rollMessage"></p>
+        <button id="rollBtn" onclick="roll()">Roll Dice</button>
+    </div>
+    <div class="log" id="log"></div>
+
+    <script>
+        let balance = 100;
+        let currentBet = 0;
+        let point = null;
+        let gameState = 'start';
+
+        function updateBalance() {
+            document.getElementById('balance').textContent = balance;
+        }
+
+        function logMessage(msg) {
+            const log = document.getElementById('log');
+            log.innerHTML = msg + "<br>" + log.innerHTML;
+        }
+
+        function showRules() {
+            alert(`--- Craps Rules ---
+1. Roll two dice.
+2. On the first roll:
+   - 7 or 11 wins.
+   - 2, 3, or 12 loses (Craps).
+   - Any other number becomes your 'Point'.
+3. If a Point is set:
+   - Rolling the Point again wins.
+   - Rolling a 7 loses.`);
+        }
+
+        function placeBet() {
+            const input = document.getElementById('betInput').value.trim().toLowerCase();
+            if (input === 'all') {
+                currentBet = balance;
+            } else {
+                const amount = parseInt(input);
+                if (isNaN(amount) || amount < 1 || amount > balance) {
+                    alert(`Invalid bet. Enter between $1 and $${balance}, or 'all'.`);
+                    return;
+                }
+                currentBet = amount;
+            }
+
+            logMessage(`You bet $${currentBet}. Rolling dice...`);
+            gameState = 'firstRoll';
+            document.getElementById('gameArea').style.display = 'block';
+            roll();
+        }
+
+        function rollDice() {
+            return [Math.floor(Math.random() * 6 + 1), Math.floor(Math.random() * 6 + 1)];
+        }
+
+        function roll() {
+            const [die1, die2] = rollDice();
+            const roll = die1 + die2;
+            document.getElementById('diceResult').textContent = `🎲 ${die1} + ${die2} = ${roll}`;
+            if (gameState === 'firstRoll') {
+                handleFirstRoll(roll);
+            } else if (gameState === 'pointRoll') {
+                handlePointRoll(roll);
+            }
+        }
+
+        function handleFirstRoll(roll) {
+            if (roll === 7 || roll === 11) {
+                balance += currentBet;
+                logMessage(`You rolled ${roll}. You win!`);
+                endRound();
+            } else if ([2, 3, 12].includes(roll)) {
+                balance -= currentBet;
+                logMessage(`Craps! You rolled ${roll}. You lose.`);
+                endRound();
+            } else {
+                point = roll;
+                gameState = 'pointRoll';
+                logMessage(`Point is set to ${point}. Keep rolling.`);
+            }
+            updateBalance();
+        }
+
+        function handlePointRoll(roll) {
+            if (roll === point) {
+                balance += currentBet;
+                logMessage(`You made your point (${point})! You win!`);
+                endRound();
+            } else if (roll === 7) {
+                balance -= currentBet;
+                logMessage("You rolled a 7. You lose.");
+                endRound();
+            } else {
+                logMessage(`You rolled ${roll}. Roll again.`);
+            }
+            updateBalance();
+        }
+
+        function endRound() {
+            gameState = 'start';
+            point = null;
+            currentBet = 0;
+            document.getElementById('gameArea').style.display = 'none';
+            if (balance <= 0) {
+                alert("You're out of money! Game over.");
+                balance = 100;
+                logMessage("Game reset with $100.");
+                updateBalance();
+            }
+        }
+    </script>
+    <div><a href="/dice"><button>TRY AGAIN</button></a></div>
+    <div><a href="/"><button>GO HOME</button></a></div>
+</body>
+
+</html>

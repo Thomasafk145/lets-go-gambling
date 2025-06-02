@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Poker Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/poker.css') }}">
+</head>
+
+<body>
+    <h1>POKER</h1>
+    <h3>You start with $100</h3>
+    <textarea id="log" readonly></textarea>
+    <div>
+
+        <label for="betInput">Your Bet: $</label>
+        <input type="number" id="betInput" min="0" step="1" />
+        <button onclick="gamePhase()">Submit Bet</button>
+    </div>
+    <script>
+        const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
+        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        let rankValues = Object.fromEntries(ranks.map((r, i) => [r, i + 2]));
+
+        let deck, playerHand, bot1Hand, bot2Hand, communityCards;
+        let playerMoney = 100, bot1Money = 100, bot2Money = 100;
+        let pot = 0, allBets = {}, phase = "Pre-Flop";
+
+
+
+        const log = document.getElementById('log');
+        const betInput = document.getElementById('betInput');
+
+        function shuffleDeck() {
+            deck = [];
+            suits.forEach(suit => ranks.forEach(rank => deck.push([rank, suit])));
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+        }
+
+        function dealHand(num = 2) {
+            return deck.splice(0, num);
+        }
+
+        function dealCommunity(num) {
+            return deck.splice(0, num);
+        }
+
+        function displayHand(hand) {
+            return hand.map(([rank, suit]) => `${rank} of ${suit}`).join(', ');
+        }
+
+        function handScore(hand) {
+            const counts = {};
+            hand.forEach(([rank]) => counts[rank] = (counts[rank] || 0) + 1);
+            const values = Object.values(counts).sort((a, b) => b - a);
+            if (values[0] === 4) return [7, "Four of a Kind"];
+            if (values[0] === 3) return values[1] === 2 ? [6, "Full House"] : [3, "Three of a Kind"];
+            if (values[0] === 2) return values[1] === 2 ? [2, "Two Pair"] : [1, "One Pair"];
+            return [0, "High Card"];
+        }
+
+        function botBet(hand, currentBet, botMoney) {
+            const [score] = handScore(hand);
+            const bluff = Math.random();
+            if (score >= 6) return Math.min(currentBet + 10, botMoney);
+            if (score >= 3) return Math.min(currentBet, botMoney);
+            if (score >= 1) return bluff > 0.7 ? Math.min(currentBet + 5, botMoney) : Math.min(currentBet, botMoney);
+            return bluff > 0.85 ? Math.min(currentBet + 15, botMoney) : (bluff < 0.2 ? 0 : Math.min(currentBet, botMoney));
+        }
+
+        function gamePhase() {
+            const playerBet = parseInt(betInput.value || "0", 10);
+            if (playerBet < 0 || playerBet > playerMoney) {
+                alert("Invalid bet amount.");
+                return;
+            }
+
+            betInput.value = '';
+
+            if (phase === "Pre-Flop") {
+                shuffleDeck();
+                communityCards = [];
+                playerHand = dealHand();
+                bot1Hand = dealHand();
+                bot2Hand = dealHand();
+
+                logMessage(`Your hand: ${displayHand(playerHand)}`);
+                playerMoney -= playerBet;
+                pot = playerBet;
+                allBets = { 'You': playerBet };
+
+                const b1 = botBet(bot1Hand, playerBet, bot1Money);
+                const b2 = botBet(bot2Hand, playerBet, bot2Money);
+                bot1Money -= b1; bot2Money -= b2;
+                allBets['Bot 1'] = b1;
+                allBets['Bot 2'] = b2;
+                pot += b1 + b2;
+
+                communityCards.push(...dealCommunity(3));
+                logMessage(`Flop: ${displayHand(communityCards)}`);
+                phase = "Flop";
+            } else if (phase === "Flop") {
+                playerMoney -= playerBet;
+                allBets['You'] += playerBet;
+                pot += playerBet;
+
+                const b1 = botBet([...bot1Hand, ...communityCards], playerBet, bot1Money);
+                const b2 = botBet([...bot2Hand, ...communityCards], playerBet, bot2Money);
+                bot1Money -= b1; bot2Money -= b2;
+                allBets['Bot 1'] += b1;
+                allBets['Bot 2'] += b2;
+                pot += b1 + b2;
+
+                communityCards.push(...dealCommunity(1));
+                logMessage(`Turn: ${displayHand([communityCards[3]])}`);
+                phase = "Turn";
+            } else if (phase === "Turn") {
+                playerMoney -= playerBet;
+                allBets['You'] += playerBet;
+                pot += playerBet;
+
+                const b1 = botBet([...bot1Hand, ...communityCards], playerBet, bot1Money);
+                const b2 = botBet([...bot2Hand, ...communityCards], playerBet, bot2Money);
+                bot1Money -= b1; bot2Money -= b2;
+                allBets['Bot 1'] += b1;
+                allBets['Bot 2'] += b2;
+                pot += b1 + b2;
+
+                communityCards.push(...dealCommunity(1));
+                logMessage(`River: ${displayHand([communityCards[4]])}`);
+                phase = "River";
+            } else if (phase === "River") {
+                playerMoney -= playerBet;
+                allBets['You'] += playerBet;
+                pot += playerBet;
+
+                const b1 = botBet([...bot1Hand, ...communityCards], playerBet, bot1Money);
+                const b2 = botBet([...bot2Hand, ...communityCards], playerBet, bot2Money);
+                bot1Money -= b1; bot2Money -= b2;
+                allBets['Bot 1'] += b1;
+                allBets['Bot 2'] += b2;
+                pot += b1 + b2;
+
+                logMessage(`Final River: ${displayHand([communityCards[4]])}`);
+                resolveRound();
+                phase = "Pre-Flop";
+            }
+        }
+
+        function resolveRound() {
+            const playerScore = handScore([...playerHand, ...communityCards]);
+            const bot1Score = allBets['Bot 1'] > 0 ? handScore([...bot1Hand, ...communityCards]) : [-1, "Folded"];
+            const bot2Score = allBets['Bot 2'] > 0 ? handScore([...bot2Hand, ...communityCards]) : [-1, "Folded"];
+
+            if (allBets['Bot 1'] > 0) logMessage(`Bot 1 hand: ${displayHand(bot1Hand)} (${bot1Score[1]})`);
+            else logMessage("Bot 1 folded.");
+            if (allBets['Bot 2'] > 0) logMessage(`Bot 2 hand: ${displayHand(bot2Hand)} (${bot2Score[1]})`);
+            else logMessage("Bot 2 folded.");
+
+            let scores = [["You", playerScore]];
+            if (bot1Score[0] >= 0) scores.push(["Bot 1", bot1Score]);
+            if (bot2Score[0] >= 0) scores.push(["Bot 2", bot2Score]);
+
+            const winner = scores.reduce((a, b) => a[1][0] > b[1][0] ? a : b);
+            logMessage(`Winner: ${winner[0]} with a ${winner[1][1]}`);
+            if (winner[0] === "You") {
+                playerMoney += pot;
+                logMessage(`You win the pot! Total: $${playerMoney}`);
+            } else {
+                logMessage(`You lost. Money left: $${playerMoney}`);
+            }
+
+            pot = 0;
+        }
+
+        function logMessage(msg) {
+            log.value += msg + "\n";
+            log.scrollTop = log.scrollHeight;
+        }
+    </script>
+    <div><a href="/poker"><button>TRY AGAIN</button></a></div>
+    <div><a href="/"><button>GO HOME</button></a></div>
+</body>
+
+</html>

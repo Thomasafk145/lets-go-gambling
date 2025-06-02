@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Blackjack Game</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/jackblack.css') }}">
+</head>
+
+<body>
+  <div id="game">
+    <h1>Blackjack</h1>
+    <div class="hand" id="player-hand"></div>
+    <p id="player-value"></p>
+    <div class="hand" id="dealer-hand"></div>
+    <p id="dealer-value"></p>
+    <div id="controls">
+      <button onclick="hit()">Hit</button>
+      <button onclick="stand()">Stand</button>
+    </div>
+    <h2 id="result"></h2>
+  </div>
+
+  <script>
+    const CARD_VALUES = {
+      '2': 2, '3': 3, '4': 4, '5': 5,
+      '6': 6, '7': 7, '8': 8, '9': 9,
+      '10': 10, 'J': 10, 'Q': 10, 'K': 10, 'A': 11
+    };
+    const SUITS = ['♠', '♥', '♦', '♣'];
+    const RANKS = Object.keys(CARD_VALUES);
+
+    let deck = [], playerHand = [], dealerHand = [], gameOver = false;
+
+    function createDeck() {
+      deck = [];
+      for (let suit of SUITS) {
+        for (let rank of RANKS) {
+          deck.push({ rank, suit });
+        }
+      }
+      deck.sort(() => Math.random() - 0.5); // shuffle
+    }
+
+    function dealCard() {
+      return deck.pop();
+    }
+
+    function calculateValue(hand) {
+      let value = 0;
+      let aces = 0;
+      for (let card of hand) {
+        value += CARD_VALUES[card.rank];
+        if (card.rank === 'A') aces++;
+      }
+      while (value > 21 && aces > 0) {
+        value -= 10;
+        aces--;
+      }
+      return value;
+    }
+
+    function displayHand(hand, elementId, revealAll = true) {
+      const el = document.getElementById(elementId);
+      el.innerHTML = '';
+      hand.forEach((card, index) => {
+        const cardEl = document.createElement('span');
+        cardEl.className = 'card';
+        if (!revealAll && index === 1 && elementId === 'dealer-hand' && !gameOver) {
+          cardEl.textContent = '?';
+        } else {
+          cardEl.textContent = `${card.rank}${card.suit}`;
+        }
+        el.appendChild(cardEl);
+      });
+    }
+
+    function updateDisplay() {
+      displayHand(playerHand, 'player-hand');
+      displayHand(dealerHand, 'dealer-hand', gameOver);
+      document.getElementById('player-value').textContent = "Player's Total: " + calculateValue(playerHand);
+      if (gameOver) {
+        document.getElementById('dealer-value').textContent = "Dealer's Total: " + calculateValue(dealerHand);
+      } else {
+        document.getElementById('dealer-value').textContent = "Dealer's Total: ?";
+      }
+    }
+
+    function hit() {
+      if (gameOver) return;
+      playerHand.push(dealCard());
+      updateDisplay();
+      if (calculateValue(playerHand) > 21) {
+        endGame("Bust! You lose.");
+      }
+    }
+
+    function stand() {
+      if (gameOver) return;
+      while (calculateValue(dealerHand) < 17) {
+        dealerHand.push(dealCard());
+      }
+      const playerTotal = calculateValue(playerHand);
+      const dealerTotal = calculateValue(dealerHand);
+      if (dealerTotal > 21 || playerTotal > dealerTotal) {
+        endGame("You win!");
+      } else if (playerTotal < dealerTotal) {
+        endGame("You lose.");
+      } else {
+        endGame("It's a tie!");
+      }
+    }
+
+    function endGame(message) {
+      gameOver = true;
+      updateDisplay();
+      document.getElementById('result').textContent = message;
+    }
+
+    function startGame() {
+      createDeck();
+      gameOver = false;
+      playerHand = [dealCard(), dealCard()];
+      dealerHand = [dealCard(), dealCard()];
+      document.getElementById('result').textContent = '';
+      updateDisplay();
+    }
+
+    // Start the game initially
+    startGame();
+  </script>
+  <div><a href="/blackjack"><button>TRY AGAIN</button></a></div>
+  <div><a href="/"><button>Go Home</button></a></div>
+</body>
+
+</html>

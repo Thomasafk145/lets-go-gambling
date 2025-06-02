@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scratch Card Game</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/scratchers.css') }}">
+</head>
+
+<body>
+    <h1>🎰 Scratch Card Game</h1>
+    <p class="balance">Balance: $<span id="balance">100</span></p>
+    <input type="number" id="numCards" min="1" value="1" />
+    <button onclick="playGame()">Play</button>
+    <div><a href="/scratchers"><button>TRY AGAIN</button></a></div>
+    <div><a href="/"><button>GO HOME</button></a></div>
+
+    <div id="gameArea"></div>
+
+    <script>
+        const SYMBOLS = ['🍒', '🍋', '🔔', '⭐', '💎', '🍀', '🎲', '🎯', '🥇', '🪙'];
+        let balance = 100;
+        const cardCost = 10;
+        const jackpotReward = 100000000;
+
+        const randomInRange = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        const smallJackpot = () => randomInRange(100, 5000);
+        const smallPrize = () => randomInRange(10, 30);
+
+        function drawSymbols() {
+            return [
+                SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
+                SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)],
+                SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]
+            ];
+        }
+
+        function checkResult(symbols) {
+            if (symbols[0] === symbols[1] && symbols[1] === symbols[2]) {
+                if (Math.floor(Math.random() * 1e20) === 0) {
+                    balance += jackpotReward;
+                    return { message: `🎉 JACKPOT! You won $${jackpotReward.toLocaleString()}!` };
+                } else {
+                    const prize = smallJackpot();
+                    balance += prize;
+                    return { message: `🎉 Small Jackpot! You won $${prize}!` };
+                }
+            } else if (symbols[0] === symbols[1] || symbols[1] === symbols[2] || symbols[0] === symbols[2]) {
+                const prize = smallPrize();
+                balance += prize;
+                return { message: `✨ Small win! You won $${prize}.` };
+            } else {
+                return { message: '😢 No match. Better luck next time.' };
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function playGame() {
+            const numCards = parseInt(document.getElementById('numCards').value);
+            if (isNaN(numCards) || numCards <= 0) {
+                alert('Please enter a valid number of cards.');
+                return;
+            }
+            const totalCost = numCards * cardCost;
+            if (balance < totalCost) {
+                alert('Insufficient balance.');
+                return;
+            }
+            balance -= totalCost;
+            document.getElementById('balance').textContent = balance;
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = '';
+
+            for (let i = 0; i < numCards; i++) {
+                const cardDiv = document.createElement('div');
+                cardDiv.innerHTML = `<p>🪙 Card #${i + 1}...</p>`;
+                gameArea.appendChild(cardDiv);
+                await sleep(500);
+
+                const symbols = drawSymbols();
+                const symbolsHTML = `<div class="symbols">${symbols.join(' ')}</div>`;
+                cardDiv.innerHTML += symbolsHTML;
+                await sleep(500);
+
+                const result = checkResult(symbols);
+                cardDiv.innerHTML += `<div class="result">${result.message}</div>`;
+                document.getElementById('balance').textContent = balance;
+                await sleep(500);
+            }
+        }
+    </script>
+</body>
+
+</html>
