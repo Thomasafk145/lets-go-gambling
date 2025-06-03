@@ -7,10 +7,14 @@
     <title>Scratch Card Game</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/scratchers.css') }}">
 </head>
+<script src="global.js"></script>
+<script>
+    updateBalanceDisplay();
+</script>
 
 <body>
     <h1>🎰 Scratch Card Game</h1>
-    <p class="balance">Balance: $<span id="balance">100</span></p>
+    <h2>Balance: <span id="balance-display"></span></h2>
     <input type="number" id="numCards" min="1" value="1" />
     <button onclick="playGame()">Play</button>
     <div><a href="/scratchers"><button>TRY AGAIN</button></a></div>
@@ -92,6 +96,10 @@
                 await sleep(500);
             }
         }
+    </script>
+    <script src="global.js"></script>
+    <script>
+        updateBalanceDisplay();
     </script>
 </body>
 

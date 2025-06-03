@@ -6,10 +6,14 @@
     <title>Advanced Roulette</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/roulette.css') }}">
 </head>
+<script src="global.js"></script>
+<script>
+    updateBalanceDisplay();
+</script>
 
 <body>
     <h1>Advanced Roulette</h1>
-    <div>Balance: $<span id="balance">100</span></div>
+    <h2>Balance: <span id="balance-display"></span></h2>
 
     <div>
         <label for="betAmount">Bet Amount:</label>
@@ -116,6 +120,10 @@
     </script>
     <div><a href="/roulette"><button>TRY AGAIN</button></a></div>
     <div><a href="/"><button>GO HOME</button></a></div>
+    <script src="global.js"></script>
+    <script>
+        updateBalanceDisplay();
+    </script>
 </body>
 
 </html>

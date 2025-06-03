@@ -6,8 +6,13 @@
   <title>Blackjack Game</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/jackblack.css') }}">
 </head>
+<script src="global.js"></script>
+<script>
+  updateBalanceDisplay();
+</script>
 
 <body>
+  <h2>Balance: <span id="balance-display"></span></h2>
   <div id="game">
     <h1>Blackjack</h1>
     <div class="hand" id="player-hand"></div>
@@ -131,6 +136,10 @@
   </script>
   <div><a href="/blackjack"><button>TRY AGAIN</button></a></div>
   <div><a href="/"><button>Go Home</button></a></div>
+  <script src="global.js"></script>
+  <script>
+    updateBalanceDisplay();
+  </script>
 </body>
 
 </html>

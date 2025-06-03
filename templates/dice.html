@@ -6,10 +6,14 @@
     <title>Craps Game</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dice.css') }}">
 </head>
+<script src="global.js"></script>
+<script>
+    updateBalanceDisplay();
+</script>
 
 <body>
     <h1>🎲 Craps Game</h1>
-    <p>Balance: $<span id="balance">100</span></p>
+    <h2>Balance: <span id="balance-display"></span></h2>
     <input type="text" id="betInput" placeholder="Enter bet amount or 'all'" />
     <br>
     <button onclick="placeBet()">Place Bet</button>
@@ -129,6 +133,10 @@
     </script>
     <div><a href="/dice"><button>TRY AGAIN</button></a></div>
     <div><a href="/"><button>GO HOME</button></a></div>
+    <script src="global.js"></script>
+    <script>
+        updateBalanceDisplay();
+    </script>
 </body>
 
 </html>

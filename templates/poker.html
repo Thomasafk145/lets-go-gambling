@@ -6,10 +6,14 @@
     <title>Poker Game</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/poker.css') }}">
 </head>
+<script src="global.js"></script>
+<script>
+    updateBalanceDisplay();
+</script>
 
 <body>
     <h1>POKER</h1>
-    <h3>You start with $100</h3>
+    <h2>Balance: <span id="balance-display"></span></h2>
     <textarea id="log" readonly></textarea>
     <div>
 
@@ -183,6 +187,10 @@
     </script>
     <div><a href="/poker"><button>TRY AGAIN</button></a></div>
     <div><a href="/"><button>GO HOME</button></a></div>
+    <script src="global.js"></script>
+    <script>
+        updateBalanceDisplay();
+    </script>
 </body>
 
 </html>
