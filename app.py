@@ -1,10 +1,4 @@
-import original_py.dice as dice
-import original_py.blackjack as blackjack
-import original_py.poker as poker
-import original_py.scratchers as scratchers
-import original_py.roulette as roulette
-import original_py.slot_machines as slot_machines
-import original_py.horse_racing as horse_racing
+
 import requests
 from flask import Flask, render_template, request
 import datetime
